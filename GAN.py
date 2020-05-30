@@ -30,6 +30,7 @@ def weights_init(m):
         m.weight.data.normal_(1.0, 0.02)
         m.bias.data.fill_(0)
 
+#Define Generator
 class G(nn.Module):
 
     def __init__(self):
@@ -58,3 +59,7 @@ class G(nn.Module):
     def forward(self, input):
         output = self.main(input)
         return output
+
+#Create Generator
+netG = G()
+netG.apply(weights_init)
