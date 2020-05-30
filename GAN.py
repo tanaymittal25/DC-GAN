@@ -48,9 +48,13 @@ class G(nn.Module):
             nn.ConvTranspose2d(128, 64, 4, 2, 1, bias = False),
             nn.BatchNorm2d(64),
             nn.ReLU(True),
-            nn.ConvTranspose2d(64, 32, 4, 2, 1, bias = False),
-            nn.BatchNorm2d(32),
-            nn.ReLU(True),
-            nn.ConvTranspose2d(32, 3, 4, 2, 1, bias = False),
+            # nn.ConvTranspose2d(64, 32, 4, 2, 1, bias = False),
+            # nn.BatchNorm2d(32),
+            # nn.ReLU(True),
+            nn.ConvTranspose2d(64, 3, 4, 2, 1, bias = False),
             nn.Tanh()
         )
+
+    def forward(self, input):
+        output = self.main(input)
+        return output
