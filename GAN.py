@@ -83,3 +83,11 @@ class D(nn.Module):
             nn.Conv2d(512, 1, 4, 1, 0, bias = False),
             nn.Sigmoid()
         )
+
+    def forward(self, input):
+        output = self.main(input)
+        return output.view(-1)
+
+#Create Discriminator
+netD = D()
+netD.apply(weights_init)
