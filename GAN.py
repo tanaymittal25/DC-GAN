@@ -100,7 +100,7 @@ optimizerG = optim.Adam(netG.parameters(), lr = 0.0002, betas = (0.5, 0.999))
 for epoch in range(25):
     for i, data in enumerate(dataloader, 0):
 
-        #Update weights
+        #Update weights of D
         netD.zero_grad()
 
         #Train D with real image
@@ -121,3 +121,11 @@ for epoch in range(25):
         errD = errD_real + errD_fake
         errD.backward()
         optimizerD.step()
+
+        #Update weights of G
+        netG.zero_grad()
+        target = Variable(torch.ones(input.size()[0]))
+        output = netD(fake)
+        errG = criterion(output, target)
+        errG.backward()
+        optimizerG.step()
