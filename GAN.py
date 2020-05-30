@@ -9,17 +9,7 @@ import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
 from torch.autograd import Variable
-
-#HyperParameters
-batchSize = 64
-imageSize = 64
-
-#Creating the transforms
-transform = transforms.Compose([transforms.Scale(imageSize), transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),])
-
-#Load dataset
-dataset = dset.CIFAR10(root = './data', download = True, transform = transform)
-dataloader = torch.utils.data.DataLoader(dataset, batch_size = batchSize, shuffle = True, num_workers = 2)
+from multiprocessing import Process, freeze_support
 
 #Weights init
 def weights_init(m):
@@ -60,10 +50,6 @@ class G(nn.Module):
         output = self.main(input)
         return output
 
-#Create Generator
-netG = G()
-netG.apply(weights_init)
-
 #Define Discriminator
 class D(nn.Module):
     def __init__(self):
@@ -88,51 +74,67 @@ class D(nn.Module):
         output = self.main(input)
         return output.view(-1)
 
-#Create Discriminator
-netD = D()
-netD.apply(weights_init)
+if __name__ == '__main__':
+    #HyperParameters
+    batchSize = 64
+    imageSize = 64
 
-#Train
-criterion = nn.BCELoss()
-optimizerD = optim.Adam(netD.parameters(), lr = 0.0002, betas = (0.5, 0.999))
-optimizerG = optim.Adam(netG.parameters(), lr = 0.0002, betas = (0.5, 0.999))
+    #Creating the transforms
+    transform = transforms.Compose([transforms.Scale(imageSize), transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),])
 
-for epoch in range(25):
-    for i, data in enumerate(dataloader, 0):
+    #Load dataset
+    dataset = dset.CIFAR10(root = './data', download = True, transform = transform)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size = batchSize, shuffle = True, num_workers = 2)
 
-        #Update weights of D
-        netD.zero_grad()
+    #Create Generator
+    netG = G()
+    netG.apply(weights_init)
 
-        #Train D with real image
-        real, _ = data
-        input = Variable(real)
-        target = Variable(torch.ones(input.size()[0]))
-        output = netD(input)
-        errD_real = criterion(output, target)
+    #Create Discriminator
+    netD = D()
+    netD.apply(weights_init)
 
-        #Train D with fake image
-        noise = Variable(torch.randn(input.size()[0], 100, 1, 1))
-        fake = netG(noise)
-        target = Variable(torch.zeros(input.size()[0]))
-        output = netD(fake.detach())
-        errD_fake = criterion(output, target)
+    #Train
+    criterion = nn.BCELoss()
+    optimizerD = optim.Adam(netD.parameters(), lr = 0.0002, betas = (0.5, 0.999))
+    optimizerG = optim.Adam(netG.parameters(), lr = 0.0002, betas = (0.5, 0.999))
 
-        #Backpropagate
-        errD = errD_real + errD_fake
-        errD.backward()
-        optimizerD.step()
+    for epoch in range(25):
+        for i, data in enumerate(dataloader, 0):
 
-        #Update weights of G
-        netG.zero_grad()
-        target = Variable(torch.ones(input.size()[0]))
-        output = netD(fake)
-        errG = criterion(output, target)
-        errG.backward()
-        optimizerG.step()
+            #Update weights of D
+            netD.zero_grad()
 
-        #Print and Save
-        print('[%d/%d] [%d/%d] Loss_D: %.4f Loss_G: %.4f' % (epoch, 25, i, len(dataloader), errD.data[0], errG.data[0]))
-        if i % 100 == 0:
-            vutils.save_image(real, '%s/real_samples_%03d_%d.png' % ("./results", epoch, i), normalize = True)
+            #Train D with real image
+            real, _ = data
+            input = Variable(real)
+            target = Variable(torch.ones(input.size()[0]))
+            output = netD(input)
+            errD_real = criterion(output, target)
+
+            #Train D with fake image
+            noise = Variable(torch.randn(input.size()[0], 100, 1, 1))
             fake = netG(noise)
-            vutils.save_image(fake.data, '%s/fake_samples_epoch_%03d_%d.png' % ("./results", epoch, i), normalize = True)
+            target = Variable(torch.zeros(input.size()[0]))
+            output = netD(fake.detach())
+            errD_fake = criterion(output, target)
+
+            #Backpropagate
+            errD = errD_real + errD_fake
+            errD.backward()
+            optimizerD.step()
+
+            #Update weights of G
+            netG.zero_grad()
+            target = Variable(torch.ones(input.size()[0]))
+            output = netD(fake)
+            errG = criterion(output, target)
+            errG.backward()
+            optimizerG.step()
+
+            #Print and Save
+            print('[%d/%d] [%d/%d] Loss_D: %.4f Loss_G: %.4f' % (epoch, 25, i, len(dataloader), errD.data, errG.data))
+            if i % 10 == 0:
+                vutils.save_image(real, '%s/real_samples_%03d_%d.png' % ("./results", epoch, i), normalize = True)
+                fake = netG(noise)
+                vutils.save_image(fake.data, '%s/fake_samples_epoch_%03d_%d.png' % ("./results", epoch, i), normalize = True)
