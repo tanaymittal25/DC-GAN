@@ -129,3 +129,10 @@ for epoch in range(25):
         errG = criterion(output, target)
         errG.backward()
         optimizerG.step()
+
+        #Print and Save
+        print('[%d/%d] [%d/%d] Loss_D: %.4f Loss_G: %.4f' % (epoch, 25, i, len(dataloader), errD.data[0], errG.data[0]))
+        if i % 100 == 0:
+            vutils.save_image(real, '%s/real_samples_%03d_%d.png' % ("./results", epoch, i), normalize = True)
+            fake = netG(noise)
+            vutils.save_image(fake.data, '%s/fake_samples_epoch_%03d_%d.png' % ("./results", epoch, i), normalize = True)
