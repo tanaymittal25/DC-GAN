@@ -91,3 +91,29 @@ class D(nn.Module):
 #Create Discriminator
 netD = D()
 netD.apply(weights_init)
+
+#Train
+criterion = nn.BCELoss()
+optimizerD = optim.Adam(netD.parameters(), lr = 0.0002, betas = (0.5, 0.999))
+optimizerG = optim.Adam(netG.parameters(), lr = 0.0002, betas = (0.5, 0.999))
+
+for epoch in range(25):
+    for i, data in enumerate(dataloader, 0):
+
+        #Update weights
+        netD.zero_grad()
+
+        #Train D with real image
+        real, _ = data
+        input = Variable(real)
+        target = Variable(torch.ones(input.size()[0]))
+        output = netD(input)
+        errD_real = criterion(output, target)
+
+        #Train D with fake image
+        noise = Variable(torch.randn(input.size()[0], 100, 1, 1))
+        fake = netG(noise)
+        target = Variable(torch.zeros(input.size()[0]))
+        output = netD(fake.detach())
+        errD_fake = criterion(output, target)
+        
