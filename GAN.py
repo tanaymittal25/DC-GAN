@@ -75,12 +75,16 @@ class D(nn.Module):
         return output.view(-1)
 
 if __name__ == '__main__':
+
+    torch.device('cuda')
+    print(torch.cuda.device_count())
+
     #HyperParameters
     batchSize = 64
     imageSize = 64
 
     #Creating the transforms
-    transform = transforms.Compose([transforms.Scale(imageSize), transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),])
+    transform = transforms.Compose([transforms.Resize(imageSize), transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),])
 
     #Load dataset
     dataset = dset.CIFAR10(root = './data', download = True, transform = transform)
@@ -99,7 +103,7 @@ if __name__ == '__main__':
     optimizerD = optim.Adam(netD.parameters(), lr = 0.0002, betas = (0.5, 0.999))
     optimizerG = optim.Adam(netG.parameters(), lr = 0.0002, betas = (0.5, 0.999))
 
-    for epoch in range(25):
+    for epoch in range(30):
         for i, data in enumerate(dataloader, 0):
 
             #Update weights of D
@@ -133,8 +137,8 @@ if __name__ == '__main__':
             optimizerG.step()
 
             #Print and Save
-            print('[%d/%d] [%d/%d] Loss_D: %.4f Loss_G: %.4f' % (epoch, 25, i, len(dataloader), errD.data, errG.data))
-            if i % 10 == 0:
-                vutils.save_image(real, '%s/real_samples_%03d_%d.png' % ("./results", epoch, i), normalize = True)
+            print('[%d/%d] [%d/%d] Loss_D: %.4f Loss_G: %.4f' % (epoch + 1, 25, i, len(dataloader), errD.data, errG.data))
+            if i % 20 == 0:
+                vutils.save_image(real, '%s/real_samples_%03d_%d.png' % ("./results", epoch + 1, i), normalize = True)
                 fake = netG(noise)
-                vutils.save_image(fake.data, '%s/fake_samples_epoch_%03d_%d.png' % ("./results", epoch, i), normalize = True)
+                vutils.save_image(fake.data, '%s/fake_samples_epoch_%03d_%d.png' % ("./results", epoch + 1, i), normalize = True)
